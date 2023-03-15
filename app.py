@@ -33,6 +33,41 @@ def create_db():
     db.drop_all()
     print ("Tables dropped")
 
+# List of movies
+movies_list = [
+    {
+        "title": "Avatar",
+        "genre": "Fantasy",
+        "year_released": 2009,
+        "runtime": "2:42:00",
+        "rotten_tomatoes_rating": 82
+    },
+    {
+        "title": "Avengers: Endgame",
+        "genre": "Action",
+        "year_released": 2019,
+        "runtime": "3:01:00",
+        "rotten_tomatoes_rating": 94
+    },
+    # Add more movies to the list
+    # {
+    #     "title": "",
+    #     "genre": "",
+    #     "year_released": ,
+    #     "runtime": "",
+    #     "rotten_tomatoes_rating": 
+    # },
+    
+]
+
+# Function to seed the movies table
+@app.cli.command("seed")
+def seed_movies_table():
+    for add_movie in movies_list:
+        db.session.add(Movies(**add_movie))
+    db.session.commit()
+    print("Movies seeded successfully")
+
 # Routes
 
 @app.route("/")
