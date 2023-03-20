@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from movies import movies_dict
+from directors import seed_directors_table
 
 # Configuration
 app = Flask(__name__)
@@ -16,23 +18,44 @@ class Movies(db.Model):
     # tablename
     __tablename__ = "movies"
     # Primary key
-    movie_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     # additional attributes
-    title = db.Column(db.String())
+    title = db.Column(db.String(), nullable=False, unique=True)
     genre = db.Column(db.String())
     year_released = db.Column(db.Integer)
     runtime = db.Column(db.Interval())
     rotten_tomatoes_rating = db.Column(db.Integer)
+    directors = db.relationship("Director", backref="owner")
+
+class Director(db.Model):
+    # tablename
+    __tablename__ = "directors"
+    # Primary key
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # additional attributes
+    name = db.Column(db.String(), nullable=False)
+    age = db.Column(db.Integer)
+    movie_id = db.Column(db.Integer, db.ForeignKey("movies.id"))
+    
 
 #SCHEMAS
+
+# Movie Schemas
 class MoviesSchema(ma.Schema):
     class Meta:
-        fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating")
+        fields = ("id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating")
 
 # Schema to handle many or all movies list
 movies_schema = MoviesSchema(many=True)
 # Schema to handle single movie
 movie_schema = MoviesSchema()
+
+# Director Schema
+
+class DirectorsSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "name", "age")
+directors_schema = DirectorsSchema(many=True)
 
 
 # CLI commands:
@@ -47,96 +70,21 @@ def create_db():
     print ("Tables dropped successfully")
 
 # Function to seed the movies table
-@app.cli.command("seed")
+@app.cli.command("seed_movies")
 def seed_movies_table():
     for add_movie in movies_dict:
         db.session.add(Movies(**add_movie))
     db.session.commit()
     print("Movies seeded successfully")
 
-# List of movies
-movies_dict = [
-    {
-        "title": "Avatar",
-        "genre": "Fantasy",
-        "year_released": 2009,
-        "runtime": "2:42:00",
-        "rotten_tomatoes_rating": 82
-    },
-    {
-        "title": "Avengers: Endgame",
-        "genre": "Action",
-        "year_released": 2019,
-        "runtime": "3:01:00",
-        "rotten_tomatoes_rating": 94
-    },
-    {
-        "title": "Avatar: The Way of Water",
-        "genre": "Fantasy",
-        "year_released": 2022,
-        "runtime": "3:12:00",
-        "rotten_tomatoes_rating": 76 
-    },
-    {
-        "title": "Titanic",
-        "genre": "Drama",
-        "year_released": 1997,
-        "runtime": "3:14:00",
-        "rotten_tomatoes_rating": 88
-    },
-    {
-        "title": "Star Wars: Episode VII - The Force Awakens",
-        "genre": "Sci-Fi",
-        "year_released": 2015,
-        "runtime": "2:18:00",
-        "rotten_tomatoes_rating": 93
-    },
-    {
-        "title": "Avengers: Infinity War",
-        "genre": "Action",
-        "year_released": 2018,
-        "runtime": "2:19:00",
-        "rotten_tomatoes_rating": 85
-    },
-    {
-        "title": "Spider-Man: No Way Home",
-        "genre": "Action",
-        "year_released": 2021,
-        "runtime": "2:28:00",
-        "rotten_tomatoes_rating": 93
-    },
-    {
-        "title": "Jurassic World",
-        "genre": "Sci-Fi",
-        "year_released": 2015,
-        "runtime": "2:4:00",
-        "rotten_tomatoes_rating": 71
-    },
-    {
-        "title": "The Lion King",
-        "genre": "Adventure",
-        "year_released": 2019,
-        "runtime": "1:58:00",
-        "rotten_tomatoes_rating": 52
-    },
-    {
-        "title": "The Avengers",
-        "genre": "Action",
-        "year_released": 2012,
-        "runtime": "2:23:00",
-        "rotten_tomatoes_rating": 91
-    }
-    # Add more movies to the list:
-    
-    # {
-    #     "title": "",
-    #     "genre": "",
-    #     "year_released": ,
-    #     "runtime": "",
-    #     "rotten_tomatoes_rating": 
-    # },
-    
-]
+@app.cli.command("seed_directors")
+def seed_directors_cli():
+    seed_directors()
+
+def seed_directors():
+    from app import Director, db
+    seed_directors_table(Director, db)
+
 
 # Routes
 
@@ -155,6 +103,7 @@ def index():
         </body>
     </html>
     """
+
 
 # Displays all movies
 @app.route("/movies", methods=["GET"])
