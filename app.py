@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
@@ -138,8 +138,6 @@ movies_dict = [
     
 ]
 
-
-
 # Routes
 
 @app.route("/")
@@ -147,7 +145,7 @@ def index():
     return """
     <html>
         <head>
-            <title>Welcome to Movie DB test</title>
+            <title>Welcome to Movie DB</title>
         </head>
         <body style="background-color: #131410;">
             <h1 style="color: #F5F6ED; text-align: center;">Welcome to Movie DB</h1>
@@ -173,14 +171,29 @@ def get_specific_movie(id):
     # output = movie_schema.dump(movie)
     if movie is None:
         return """
-    <html>
-        <head>
-            <title>Movie not found!</title>
-        </head>
-        <body style="background-color: #131410;">
-            <h1 style="color: #F5F6ED; text-align: center;">Movie not found!</h1>
-            <div style="text-align: center;"></div>
-        </body>
-    </html>
-    """
+        <html>
+            <head>
+                <title>Movie not found!</title>
+            </head>
+            <body style="background-color: #131410;">
+                <h1 style="color: #F5F6ED; text-align: center;">Movie not found!</h1>
+                <div style="text-align: center;"></div>
+            </body>
+        </html>
+        """
+    return movie_schema.dump(movie)
+
+@app.route("/movies", methods=["POST"])
+def post_movie():
+    movie_fields = movie_schema.load(request.json)
+
+    movie = Movies (
+        title = movie_fields["title"],
+        genre = movie_fields["genre"],
+        year_released = movie_fields["year_released"],
+        runtime = movie_fields["runtime"],
+        rotten_tomatoes_rating = movie_fields["rotten_tomatoes_rating"])
+    db.session.add(movie)
+    db.session.commit()
+    print (movie.title + " has been added")
     return movie_schema.dump(movie)
