@@ -25,9 +25,9 @@ class Movies(db.Model):
     year_released = db.Column(db.Integer)
     runtime = db.Column(db.Interval())
     rotten_tomatoes_rating = db.Column(db.Integer)
-    directors = db.relationship("Director", backref="owner")
+    directors = db.relationship("Directors", backref="owner")
 
-class Director(db.Model):
+class Directors(db.Model):
     # tablename
     __tablename__ = "directors"
     # Primary key
@@ -45,7 +45,7 @@ class MoviesSchema(ma.Schema):
     class Meta:
         fields = ("id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating")
 
-# Schema to handle many or all movies list
+# Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
 # Schema to handle single movie
 movie_schema = MoviesSchema()
@@ -54,8 +54,11 @@ movie_schema = MoviesSchema()
 
 class DirectorsSchema(ma.Schema):
     class Meta:
-        fields = ("id", "name", "age")
+        fields = ("id", "name", "age", "movie_id")
+# Schema to handle many or all directors
 directors_schema = DirectorsSchema(many=True)
+# Schema to handle single director
+director_schema = DirectorsSchema()
 
 
 # CLI commands:
@@ -82,8 +85,8 @@ def seed_directors_cli():
     seed_directors()
 
 def seed_directors():
-    from app import Director, db
-    seed_directors_table(Director, db)
+    from app import Directors, db
+    seed_directors_table(Directors, db)
 
 
 # Routes
@@ -99,6 +102,7 @@ def index():
             <h1 style="color: #F5F6ED; text-align: center;">Welcome to Movie DB</h1>
             <div style="text-align: center;">
                 <a href="/movies" style="color: #F5F6ED; font-size: 20px;">View All Movies</a>
+                <a href="/directors" style="color: #F5F6ED; font-size: 20px;">View All Directors</a>
             </div>
         </body>
     </html>
@@ -111,13 +115,13 @@ def get_all_movies():
     movies_list = Movies.query.all() 
     # con holds converted to format that works from schema
     output = movies_schema.dump(movies_list)
-    return jsonify(output)
+    return (output)
+
 
 # Displays a movie from movie_id
 @app.route("/movies/<int:id>", methods=["GET"])
 def get_specific_movie(id):
     movie = Movies.query.get(id) 
-    # output = movie_schema.dump(movie)
     if movie is None:
         return """
         <html>
@@ -131,6 +135,41 @@ def get_specific_movie(id):
         </html>
         """
     return movie_schema.dump(movie)
+
+# Displays all directors
+@app.route("/directors", methods=["GET"])
+def get_all_directors():
+    directors_list = Directors.query.all() 
+    # con holds converted to format that works from schema
+    output = directors_schema.dump(directors_list)
+    return (output)
+
+# Displays a director from director_id
+@app.route("/directors/<int:id>", methods=["GET"])
+def get_specific_director(id):
+    director = Directors.query.get(id) 
+    if director is None:
+        return """
+        <html>
+            <head>
+                <title>Director not found!</title>
+            </head>
+            <body style="background-color: #131410;">
+                <h1 style="color: #F5F6ED; text-align: center;">Director not found!</h1>
+                <div style="text-align: center;"></div>
+            </body>
+        </html>
+        """
+    return director_schema.dump(director)
+
+
+
+
+
+
+
+
+
 
 @app.route("/movies", methods=["POST"])
 def post_movie():

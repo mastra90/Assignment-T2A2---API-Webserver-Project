@@ -1,6 +1,6 @@
-def seed_directors_table(Director, db):
+def seed_directors_table(Directors, db):
     for add_director in directors_dict:
-        db.session.add(Director(**add_director))
+        db.session.add(Directors(**add_director))
     db.session.commit()
     print("Directors seeded successfully")
 
@@ -17,9 +17,3 @@ directors_dict = [
     },
     # Add more directors to the list, with corresponding movie_id
 ]
-
-
-
-
-
-
