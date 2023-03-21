@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, request
 from flask_marshmallow import Marshmallow
 from movies import movies_dict
 from directors import seed_directors_table
+from models import db, Movies, Directors
+
 
 # Configuration
 app = Flask(__name__)
@@ -10,33 +11,8 @@ connection = "postgresql+psycopg2://box_office_db_dev:963.@localhost:5432/box_of
 
 #Connection
 app.config["SQLALCHEMY_DATABASE_URI"] = connection
-db = SQLAlchemy(app)
+db.init_app(app)
 ma = Marshmallow(app)
-
-# Models:
-class Movies(db.Model):
-    # tablename
-    __tablename__ = "movies"
-    # Primary key
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # additional attributes
-    title = db.Column(db.String(), nullable=False, unique=True)
-    genre = db.Column(db.String())
-    year_released = db.Column(db.Integer)
-    runtime = db.Column(db.Interval())
-    rotten_tomatoes_rating = db.Column(db.Integer)
-    directors = db.relationship("Directors", backref="owner")
-
-class Directors(db.Model):
-    # tablename
-    __tablename__ = "directors"
-    # Primary key
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # additional attributes
-    name = db.Column(db.String(), nullable=False)
-    age = db.Column(db.Integer)
-    movie_id = db.Column(db.Integer, db.ForeignKey("movies.id"))
-    
 
 #SCHEMAS
 
