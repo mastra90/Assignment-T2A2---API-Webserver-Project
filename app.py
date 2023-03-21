@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask_marshmallow import Marshmallow
-from movies import movies_dict
+from movies import seed_movies_table
 from directors import seed_directors_table
 from models import db, Movies, Directors
 
@@ -16,10 +16,10 @@ ma = Marshmallow(app)
 
 #SCHEMAS
 
-# Movie Schemas
+# Movie (goes to server)
 class MoviesSchema(ma.Schema):
     class Meta:
-        fields = ("id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating")
+        fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating", "director_id")
 
 # Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
@@ -30,7 +30,7 @@ movie_schema = MoviesSchema()
 
 class DirectorsSchema(ma.Schema):
     class Meta:
-        fields = ("id", "name", "age", "movie_id")
+        fields = ("director_id", "name", "dob")
 # Schema to handle many or all directors
 directors_schema = DirectorsSchema(many=True)
 # Schema to handle single director
@@ -50,12 +50,14 @@ def create_db():
 
 # Function to seed the movies table
 @app.cli.command("seed_movies")
-def seed_movies_table():
-    for add_movie in movies_dict:
-        db.session.add(Movies(**add_movie))
-    db.session.commit()
-    print("Movies seeded successfully")
+def seed_movies_cli():
+    seed_movies()
+    
+def seed_movies():
+    from app import Movies, db
+    seed_movies_table(Movies, db)
 
+# Function to seed the directors table
 @app.cli.command("seed_directors")
 def seed_directors_cli():
     seed_directors()
@@ -137,9 +139,6 @@ def get_specific_director(id):
         </html>
         """
     return director_schema.dump(director)
-
-
-
 
 
 
