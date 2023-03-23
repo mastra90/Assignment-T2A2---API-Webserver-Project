@@ -39,7 +39,7 @@ director_schema = DirectorsSchema()
 
 class BoxOfficeSchema(ma.Schema):
     class Meta:
-        fields = ("box_office_id", "worldwide_gross", "domestic_gross")
+        fields = ("box_office_id", "worldwide_gross", "domestic_gross", "movie_id")
 # Schema to handle many or all box_offices
 box_offices_schema = BoxOfficeSchema(many=True)
 # Schema to handle single box_office
@@ -99,11 +99,12 @@ def index():
         <head>
             <title>Welcome to Movie DB</title>
         </head>
-        <body style="background-color: #131410;">
+        <body style="background-color: #121212;">
             <h1 style="color: #F5F6ED; text-align: center;">Welcome to Movie DB</h1>
             <div style="text-align: center;">
                 <a href="/movies" style="color: #F5F6ED; font-size: 20px;">View All Movies</a>
                 <a href="/directors" style="color: #F5F6ED; font-size: 20px;">View All Directors</a>
+                <a href="/box_office" style="color: #F5F6ED; font-size: 20px;">View Box_office</a>
             </div>
         </body>
     </html>
@@ -129,7 +130,7 @@ def get_specific_movie(id):
             <head>
                 <title>Movie not found!</title>
             </head>
-            <body style="background-color: #131410;">
+            <body style="background-color: #121212;">
                 <h1 style="color: #F5F6ED; text-align: center;">Movie not found!</h1>
                 <div style="text-align: center;"></div>
             </body>
@@ -155,7 +156,7 @@ def get_specific_director(id):
             <head>
                 <title>Director not found!</title>
             </head>
-            <body style="background-color: #131410;">
+            <body style="background-color: #121212;">
                 <h1 style="color: #F5F6ED; text-align: center;">Director not found!</h1>
                 <div style="text-align: center;"></div>
             </body>
@@ -171,6 +172,24 @@ def get_all_box_offices():
     # con holds converted to format that works from schema
     output = box_offices_schema.dump(box_offices_list)
     return (output)
+
+# Displays a box_office entry from box_office_id
+@app.route("/box_office/<int:id>", methods=["GET"])
+def get_specific_box_office(id):
+    box_office = BoxOffice.query.get(id) 
+    if box_office is None:
+        return """
+        <html>
+            <head>
+                <title>Box Office entry not found!</title>
+            </head>
+            <body style="background-color: #121212;">
+                <h1 style="color: #F5F6ED; text-align: center;">Box Office entry not found!</h1>
+                <div style="text-align: center;"></div>
+            </body>
+        </html>
+        """
+    return box_office_schema.dump(box_office)
 
 
 
