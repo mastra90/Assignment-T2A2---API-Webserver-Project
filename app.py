@@ -4,7 +4,7 @@ from movies import seed_movies_table
 from directors import seed_directors_table
 from models import db, Movies, Directors, BoxOffice
 from box_office import seed_box_office_table
-
+from marshmallow import post_dump
 
 
 # Configuration
@@ -16,19 +16,37 @@ app.config["SQLALCHEMY_DATABASE_URI"] = connection
 db.init_app(app)
 ma = Marshmallow(app)
 
-#SCHEMAS
+# ***********************SCHEMAS************************
 
-# Movie (goes to server)
+def seconds_to_hhmmss(seconds):
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+
+# -----------Movie-----------
 class MoviesSchema(ma.Schema):
     class Meta:
         fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating", "director_id")
+    
+    @post_dump(pass_many=True)
+    def format_runtime(self, data, many):
+        if many:
+            for item in data:
+                item["runtime"] = seconds_to_hhmmss(item["runtime"])
+        else:
+            data["runtime"] = seconds_to_hhmmss(data["runtime"])
+        return data
+    
 # Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
 # Schema to handle single movie
 movie_schema = MoviesSchema()
 
-# Director Schema
 
+
+
+
+# --------Director Schema--------
 class DirectorsSchema(ma.Schema):
     class Meta:
         fields = ("director_id", "name", "dob")
@@ -37,6 +55,8 @@ directors_schema = DirectorsSchema(many=True)
 # Schema to handle single director
 director_schema = DirectorsSchema()
 
+
+# -------Box office Schema-------
 class BoxOfficeSchema(ma.Schema):
     class Meta:
         fields = ("box_office_id", "worldwide_gross", "domestic_gross", "movie_id")
@@ -46,7 +66,8 @@ box_offices_schema = BoxOfficeSchema(many=True)
 box_office_schema = BoxOfficeSchema()
 
 
-# CLI commands:
+# ***********************CLI commands***********************
+
 @app.cli.command("create")
 def create_db():
     db.create_all()
@@ -90,7 +111,9 @@ def seed_box_office():
     seed_box_office_table(BoxOffice, db)
 
 
-# Routes
+# ***********************Routes***********************
+
+# ---------------GET---------------
 
 @app.route("/")
 def index():
@@ -109,7 +132,6 @@ def index():
         </body>
     </html>
     """
-
 
 # Displays all movies
 @app.route("/movies", methods=["GET"])
@@ -165,7 +187,7 @@ def get_specific_director(id):
     return director_schema.dump(director)
 
 
-# Displays all box_offices
+# Displays all box_office entires
 @app.route("/box_office", methods=["GET"])
 def get_all_box_offices():
     box_offices_list = BoxOffice.query.all() 
@@ -191,9 +213,7 @@ def get_specific_box_office(id):
         """
     return box_office_schema.dump(box_office)
 
-
-
-
+# ---------------POST---------------
 
 @app.route("/movies", methods=["POST"])
 def post_movie():
