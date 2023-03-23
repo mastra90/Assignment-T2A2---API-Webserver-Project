@@ -2,7 +2,9 @@ from flask import Flask, request
 from flask_marshmallow import Marshmallow
 from movies import seed_movies_table
 from directors import seed_directors_table
-from models import db, Movies, Directors
+from models import db, Movies, Directors, BoxOffice
+from box_office import seed_box_office_table
+
 
 
 # Configuration
@@ -20,7 +22,6 @@ ma = Marshmallow(app)
 class MoviesSchema(ma.Schema):
     class Meta:
         fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating", "director_id")
-
 # Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
 # Schema to handle single movie
@@ -36,6 +37,14 @@ directors_schema = DirectorsSchema(many=True)
 # Schema to handle single director
 director_schema = DirectorsSchema()
 
+class BoxOfficeSchema(ma.Schema):
+    class Meta:
+        fields = ("box_office_id", "worldwide_gross", "domestic_gross")
+# Schema to handle many or all box_offices
+box_offices_schema = BoxOfficeSchema(many=True)
+# Schema to handle single box_office
+box_office_schema = BoxOfficeSchema()
+
 
 # CLI commands:
 @app.cli.command("create")
@@ -47,6 +56,12 @@ def create_db():
 def create_db():
     db.drop_all()
     print ("Tables dropped successfully")
+
+@app.cli.command("seed_all")
+def seed_all_tables():
+    seed_directors()
+    seed_movies()
+    seed_box_office()
 
 # Function to seed the movies table
 @app.cli.command("seed_movies")
@@ -65,6 +80,14 @@ def seed_directors_cli():
 def seed_directors():
     from app import Directors, db
     seed_directors_table(Directors, db)
+
+@app.cli.command("seed_box_office")
+def seed_box_office_cli():
+    seed_box_office()
+
+def seed_box_office():
+    from app import BoxOffice, db
+    seed_box_office_table(BoxOffice, db)
 
 
 # Routes
@@ -141,6 +164,13 @@ def get_specific_director(id):
     return director_schema.dump(director)
 
 
+# Displays all box_offices
+@app.route("/box_office", methods=["GET"])
+def get_all_box_offices():
+    box_offices_list = BoxOffice.query.all() 
+    # con holds converted to format that works from schema
+    output = box_offices_schema.dump(box_offices_list)
+    return (output)
 
 
 
@@ -160,3 +190,4 @@ def post_movie():
     db.session.commit()
     print (movie.title + " has been added")
     return movie_schema.dump(movie)
+

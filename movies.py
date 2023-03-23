@@ -93,7 +93,9 @@ movies_dict = [
     #     "genre": "",
     #     "year_released": ,
     #     "runtime": "",
-    #     "rotten_tomatoes_rating": 
+    #     "rotten_tomatoes_rating",
+    #     "director_id": 
     # },
     
 ]
+

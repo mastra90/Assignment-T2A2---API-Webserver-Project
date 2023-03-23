@@ -14,6 +14,7 @@ class Movies(db.Model):
     runtime = db.Column(db.Interval())
     rotten_tomatoes_rating = db.Column(db.Integer)
     director_id = db.Column(db.Integer, db.ForeignKey("directors.director_id"))
+    box_office_id = db.relationship("BoxOffice", backref="movies", uselist=False)
 
 class Directors(db.Model):
     # tablename
@@ -24,3 +25,15 @@ class Directors(db.Model):
     name = db.Column(db.String(), nullable=False)
     dob = db.Column(db.String())
     movies = db.relationship("Movies", backref="director") 
+
+class BoxOffice(db.Model):
+    # tablename
+    __tablename__ = "box_office"
+    # Primary key
+    box_office_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # additional attributes
+    worldwide_gross = db.Column(db.Float, nullable=False)
+    domestic_gross = db.Column(db.Float)
+    movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"))
+
+
