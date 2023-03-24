@@ -2,8 +2,9 @@ from flask import Flask, request
 from flask_marshmallow import Marshmallow
 from movies import seed_movies_table
 from directors import seed_directors_table
-from models import db, Movies, Directors, BoxOffice
+from models import db, Movies, Directors, BoxOffice, LeadActor
 from box_office import seed_box_office_table
+from lead_actor import seed_lead_actor_table
 from marshmallow import post_dump
 
 
@@ -43,9 +44,6 @@ movies_schema = MoviesSchema(many=True)
 movie_schema = MoviesSchema()
 
 
-
-
-
 # --------Director Schema--------
 class DirectorsSchema(ma.Schema):
     class Meta:
@@ -66,6 +64,17 @@ box_offices_schema = BoxOfficeSchema(many=True)
 box_office_schema = BoxOfficeSchema()
 
 
+# -------Lead actor Schema-------
+class LeadActorSchema(ma.Schema):
+    class Meta:
+        fields = ("lead_actor_id", "lead_actor_name", "lead_character_name", "movie_id")
+# Schema to handle all lead actors
+lead_actors_schema = LeadActorSchema(many=True)
+# Schema to handle single lead actor
+lead_actor_schema = LeadActorSchema()
+
+
+
 # ***********************CLI commands***********************
 
 @app.cli.command("create")
@@ -83,6 +92,7 @@ def seed_all_tables():
     seed_directors()
     seed_movies()
     seed_box_office()
+    seed_lead_actor ()
 
 # Function to seed the movies table
 @app.cli.command("seed_movies")
@@ -109,6 +119,14 @@ def seed_box_office_cli():
 def seed_box_office():
     from app import BoxOffice, db
     seed_box_office_table(BoxOffice, db)
+
+@app.cli.command("seed_lead_actor")
+def seed_lead_actor_cli():
+    seed_lead_actor()
+
+def seed_lead_actor():
+    from app import LeadActor, db
+    seed_lead_actor_table(LeadActor, db)
 
 
 # ***********************Routes***********************
@@ -212,6 +230,35 @@ def get_specific_box_office(id):
         </html>
         """
     return box_office_schema.dump(box_office)
+
+
+# Displays all lead actors
+@app.route("/lead_actors", methods=["GET"])
+def get_all_lead_actors():
+    lead_actors_list = LeadActor.query.all() 
+    # con holds converted to format that works from schema
+    output = lead_actors_schema.dump(lead_actors_list)
+    return (output)
+
+# Displays a lead actor entry from lead_actors_id
+@app.route("/lead_actors/<int:id>", methods=["GET"])
+def get_specific_lead_actor(id):
+    lead_actor = LeadActor.query.get(id) 
+    if lead_actor is None:
+        return """
+        <html>
+            <head>
+                <title>Lead actor not found!</title>
+            </head>
+            <body style="background-color: #121212;">
+                <h1 style="color: #F5F6ED; text-align: center;">Lead actor not found!</h1>
+                <div style="text-align: center;"></div>
+            </body>
+        </html>
+        """
+    return lead_actor_schema.dump(lead_actor)
+
+
 
 # ---------------POST---------------
 
