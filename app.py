@@ -145,7 +145,8 @@ def index():
             <div style="text-align: center;">
                 <a href="/movies" style="color: #F5F6ED; font-size: 20px;">View All Movies</a>
                 <a href="/directors" style="color: #F5F6ED; font-size: 20px;">View All Directors</a>
-                <a href="/box_office" style="color: #F5F6ED; font-size: 20px;">View Box_office</a>
+                <a href="/box_office" style="color: #F5F6ED; font-size: 20px;">View Box office earnings</a>
+                <a href="/lead_actors" style="color: #F5F6ED; font-size: 20px;">View Lead actors</a>
             </div>
         </body>
     </html>
@@ -155,9 +156,8 @@ def index():
 @app.route("/movies", methods=["GET"])
 def get_all_movies():
     movies_list = Movies.query.all() 
-    # con holds converted to format that works from schema
     output = movies_schema.dump(movies_list)
-    return (output)
+    return (output), 200
 
 
 # Displays a movie from movie_id
@@ -165,71 +165,39 @@ def get_all_movies():
 def get_specific_movie(id):
     movie = Movies.query.get(id) 
     if movie is None:
-        return """
-        <html>
-            <head>
-                <title>Movie not found!</title>
-            </head>
-            <body style="background-color: #121212;">
-                <h1 style="color: #F5F6ED; text-align: center;">Movie not found!</h1>
-                <div style="text-align: center;"></div>
-            </body>
-        </html>
-        """
-    return movie_schema.dump(movie)
+        return {"message": "Movie not found"}, 404
+    return movie_schema.dump(movie), 200
 
 # Displays all directors
 @app.route("/directors", methods=["GET"])
 def get_all_directors():
     directors_list = Directors.query.all() 
-    # con holds converted to format that works from schema
     output = directors_schema.dump(directors_list)
-    return (output)
+    return (output), 200
 
 # Displays a director from director_id
 @app.route("/directors/<int:id>", methods=["GET"])
 def get_specific_director(id):
     director = Directors.query.get(id) 
     if director is None:
-        return """
-        <html>
-            <head>
-                <title>Director not found!</title>
-            </head>
-            <body style="background-color: #121212;">
-                <h1 style="color: #F5F6ED; text-align: center;">Director not found!</h1>
-                <div style="text-align: center;"></div>
-            </body>
-        </html>
-        """
-    return director_schema.dump(director)
+        return {"message": "Director not found"}, 404
+    return director_schema.dump(director), 200
 
 
 # Displays all box_office entires
 @app.route("/box_office", methods=["GET"])
 def get_all_box_offices():
     box_offices_list = BoxOffice.query.all() 
-    # con holds converted to format that works from schema
     output = box_offices_schema.dump(box_offices_list)
-    return (output)
+    return (output), 200
 
 # Displays a box_office entry from box_office_id
 @app.route("/box_office/<int:id>", methods=["GET"])
 def get_specific_box_office(id):
     box_office = BoxOffice.query.get(id) 
     if box_office is None:
-        return """
-        <html>
-            <head>
-                <title>Box Office entry not found!</title>
-            </head>
-            <body style="background-color: #121212;">
-                <h1 style="color: #F5F6ED; text-align: center;">Box Office entry not found!</h1>
-                <div style="text-align: center;"></div>
-            </body>
-        </html>
-        """
-    return box_office_schema.dump(box_office)
+        return {"message": "Box office entry not found"}, 404
+    return box_office_schema.dump(box_office) ,200
 
 
 # Displays all lead actors
@@ -245,24 +213,14 @@ def get_all_lead_actors():
 def get_specific_lead_actor(id):
     lead_actor = LeadActor.query.get(id) 
     if lead_actor is None:
-        return """
-        <html>
-            <head>
-                <title>Lead actor not found!</title>
-            </head>
-            <body style="background-color: #121212;">
-                <h1 style="color: #F5F6ED; text-align: center;">Lead actor not found!</h1>
-                <div style="text-align: center;"></div>
-            </body>
-        </html>
-        """
-    return lead_actor_schema.dump(lead_actor)
+        return {"message": "Lead actor not found"}, 404
+    return lead_actor_schema.dump(lead_actor) ,200 
 
 
 
 # ---------------POST---------------
 
-@app.route("/movies", methods=["POST"])
+@app.route("/add_movies", methods=["POST"])
 def post_movie():
     movie_fields = movie_schema.load(request.json)
 
