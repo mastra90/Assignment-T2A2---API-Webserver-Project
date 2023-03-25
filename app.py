@@ -220,18 +220,58 @@ def get_specific_lead_actor(id):
 
 # ---------------POST---------------
 
-@app.route("/add_movies", methods=["POST"])
+@app.route("/post_director", methods=["POST"])
+def post_director():
+    director_fields = director_schema.load(request.json)
+
+    director = Directors(
+        name = director_fields["name"],
+        dob = director_fields["dob"])
+    db.session.add(director)
+    db.session.commit()
+    print (director.name + " has been added")
+    return director_schema.dump(director)
+
+
+@app.route("/post_movie", methods=["POST"])
 def post_movie():
     movie_fields = movie_schema.load(request.json)
 
-    movie = Movies (
+    movie = Movies(
         title = movie_fields["title"],
         genre = movie_fields["genre"],
         year_released = movie_fields["year_released"],
         runtime = movie_fields["runtime"],
-        rotten_tomatoes_rating = movie_fields["rotten_tomatoes_rating"])
+        rotten_tomatoes_rating = movie_fields["rotten_tomatoes_rating"],
+        director_id = movie_fields["director_id"])
     db.session.add(movie)
     db.session.commit()
     print (movie.title + " has been added")
     return movie_schema.dump(movie)
 
+
+@app.route("/post_box_office", methods=["POST"])
+def post_box_office():
+    box_office_fields = box_office_schema.load(request.json)
+
+    box_office = BoxOffice(
+        worldwide_gross = box_office_fields["worldwide_gross"],
+        domestic_gross = box_office_fields["domestic_gross"],
+        movie_id = box_office_fields["movie_id"])
+    db.session.add(box_office)
+    db.session.commit()
+    print ("Box office entry has been added")
+    return box_office_schema.dump(box_office)
+
+@app.route("/post_lead_actor", methods=["POST"])
+def post_lead_actor():
+    lead_actor_fields = lead_actor_schema.load(request.json)
+
+    lead_actor = LeadActor(
+        lead_actor_name = lead_actor_fields["lead_actor_name"],
+        lead_character_name = lead_actor_fields["lead_character_name"],
+        movie_id = lead_actor_fields["movie_id"])
+    db.session.add(lead_actor)
+    db.session.commit()
+    print (lead_actor.lead_actor_name + " has been added")
+    return lead_actor_schema.dump(lead_actor)
