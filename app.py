@@ -19,12 +19,17 @@ ma = Marshmallow(app)
 
 # ***********************SCHEMAS************************
 
+# -----------All tables-----------
+
+
+
+# -----------Movie-----------
 def seconds_to_hhmmss(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
 
-# -----------Movie-----------
+
 class MoviesSchema(ma.Schema):
     class Meta:
         fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating", "director_id")
@@ -37,7 +42,7 @@ class MoviesSchema(ma.Schema):
         else:
             data["runtime"] = seconds_to_hhmmss(data["runtime"])
         return data
-    
+
 # Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
 # Schema to handle single movie
@@ -152,7 +157,122 @@ def index():
     </html>
     """
 
-# Displays all movies
+# Displays all tables
+@app.route("/all_tables", methods=["GET"])
+def get_all_tables_data():
+    # Fetch data from each table
+    movies_list = Movies.query.all()
+    directors_list = Directors.query.all()
+    box_offices_list = BoxOffice.query.all()
+    lead_actors_list = LeadActor.query.all()
+
+    # Serialize data using the corresponding schemas
+    movies_output = movies_schema.dump(movies_list)
+    directors_output = directors_schema.dump(directors_list)
+    box_offices_output = box_offices_schema.dump(box_offices_list)
+    lead_actors_output = lead_actors_schema.dump(lead_actors_list)
+
+    # Store the serialized data in a dictionary
+    output = {
+        "movies": movies_output,
+        "directors": directors_output,
+        "box_office": box_offices_output,
+        "lead_actors": lead_actors_output
+    }
+
+    # Return the dictionary as the response
+    return output, 200
+
+
+
+
+@app.route("/all_tables/<string:title>", methods=["GET"])
+def get_specific_movie_from_all_tables(title):
+    # Find the movie by title
+    movie = Movies.query.filter_by(title=title).first()
+
+    if movie is None:
+        return {"message": "Movie not found. Please note that the movie search is cap sensitive"}, 404
+
+    # Fetch related data using the relationships between tables
+    director = movie.director
+    box_office = movie.box_office_id
+    lead_actor = movie.lead_actor_id
+
+    # Serialize data using the corresponding schemas
+    movie_output = movie_schema.dump(movie)
+    director_output = director_schema.dump(director)
+    box_office_output = box_office_schema.dump(box_office)
+    lead_actor_output = lead_actor_schema.dump(lead_actor)
+
+    output = {
+        "movie": movie_output,
+        "director": director_output,
+        "box_office": box_office_output,
+        "lead_actor": lead_actor_output
+    }
+
+    return output, 200
+
+@app.route("/all_tables/<int:id>", methods=["GET"])
+def get_specific_movie_from(id):
+    # Find the movie by id
+    movie = Movies.query.get(id)
+
+    if movie is None:
+        return {"message": "Movie not found. Please note that the movie filter is cap sensitive"}, 404
+
+    # Fetch related data using the relationships between tables
+    director = movie.director
+    box_office = movie.box_office_id
+    lead_actor = movie.lead_actor_id
+
+    # Serialize data using the corresponding schemas
+    movie_output = movie_schema.dump(movie)
+    director_output = director_schema.dump(director)
+    box_office_output = box_office_schema.dump(box_office)
+    lead_actor_output = lead_actor_schema.dump(lead_actor)
+
+    output = {
+        "movie": movie_output,
+        "director": director_output,
+        "box_office": box_office_output,
+        "lead_actor": lead_actor_output
+    }
+
+    return output, 200
+
+@app.route("/all_tables/director/<string:name>", methods=["GET"])
+def get_specific_director_from(name):
+    # Find the movie by id
+    director = Directors.query.filter_by(name=name).first()
+
+    if director is None:
+        return {"message": "Director not found. Please note that the director filter is cap sensitive"}, 404
+
+    # Fetch related data using the relationships between tables
+    movie = director.movies[0] if director.movies else None
+    box_office = movie.box_office_id if movie else None
+    lead_actor = movie.lead_actor_id if movie else None
+
+    # Serialize data using the corresponding schemas
+    director_output = director_schema.dump(director)
+    movie_output = movie_schema.dump(movie) if movie else None
+    box_office_output = box_office_schema.dump(box_office) if box_office else None
+    lead_actor_output = lead_actor_schema.dump(lead_actor) if lead_actor else None
+
+    output = {
+        "director": director_output,
+        "movie": movie_output,
+        "box_office": box_office_output,
+        "lead_actor": lead_actor_output
+    }
+
+    return output, 200
+
+
+
+# Displays all movies from movies table
 @app.route("/movies", methods=["GET"])
 def get_all_movies():
     movies_list = Movies.query.all() 
