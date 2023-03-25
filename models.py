@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
 
 db = SQLAlchemy()
 
@@ -14,9 +15,9 @@ class Movies(db.Model):
     year_released = db.Column(db.Integer)
     runtime = db.Column(db.Interval())
     rotten_tomatoes_rating = db.Column(db.Integer)
-    director_id = db.Column(db.Integer, db.ForeignKey("directors.director_id"))
-    box_office_id = db.relationship("BoxOffice", backref="movies", uselist=False)
-    lead_actor_id = db.relationship("LeadActor", backref="movies", uselist=False)
+    director_id = db.Column(db.Integer, db.ForeignKey("directors.director_id", ondelete="CASCADE"), nullable=True)
+    box_office_id = db.relationship("BoxOffice", backref="movies", uselist=False, cascade="all, delete")
+    lead_actor_id = db.relationship("LeadActor", backref="movies", uselist=False, cascade="all, delete")
     
 
 class Directors(db.Model):
@@ -27,7 +28,7 @@ class Directors(db.Model):
     # additional attributes
     name = db.Column(db.String(), nullable=False)
     dob = db.Column(db.String())
-    movies = db.relationship("Movies", backref="director") 
+    movies = db.relationship("Movies", backref="director", cascade="all, delete") 
 
 class BoxOffice(db.Model):
     # tablename
@@ -46,4 +47,20 @@ class LeadActor(db.Model):
     lead_character_name = db.Column(db.String(), nullable=False)
     movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"))
 
+def after_flush(session, flush_context):
+    # Iterate through the deleted objects in the session
+    for obj in session.deleted:
+        # Check if the deleted object is an instance of the Movies class
+        if isinstance(obj, Movies):
+            # Check if the director has any other movies left
+            remaining_movies = Movies.query.filter_by(director_id=obj.director_id).count()
+
+            if remaining_movies == 0:
+                # Delete the director if there are no movies left
+                director = Directors.query.get(obj.director_id)
+                if director:
+                    session.delete(director)
+
+# Set the listener on the session to execute the after_flush function after a flush event occurs
+event.listen(db.session, 'after_flush', after_flush)
 

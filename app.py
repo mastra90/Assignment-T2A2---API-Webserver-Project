@@ -148,18 +148,18 @@ def index():
         <body style="background-color: #121212;">
             <h1 style="color: #F5F6ED; text-align: center;">Welcome to Movie DB</h1>
             <div style="text-align: center;">
-                <a href="/movies" style="color: #F5F6ED; font-size: 20px;">View All Movies</a>
-                <a href="/directors" style="color: #F5F6ED; font-size: 20px;">View All Directors</a>
-                <a href="/box_office" style="color: #F5F6ED; font-size: 20px;">View Box office earnings</a>
-                <a href="/lead_actors" style="color: #F5F6ED; font-size: 20px;">View Lead actors</a>
+                <a href="/tables/movies" style="color: #F5F6ED; font-size: 20px;">View All Movies</a>
+                <a href="/tables/directors" style="color: #F5F6ED; font-size: 20px;">View All Directors</a>
+                <a href="/tables/box_office" style="color: #F5F6ED; font-size: 20px;">View Box office earnings</a>
+                <a href="/tables/lead_actors" style="color: #F5F6ED; font-size: 20px;">View Lead actors</a>
             </div>
         </body>
     </html>
     """
 
 # Displays all tables
-@app.route("/all_tables", methods=["GET"])
-def get_all_tables_data():
+@app.route("/all", methods=["GET"])
+def get_all_data():
     # Fetch data from each table
     movies_list = Movies.query.all()
     directors_list = Directors.query.all()
@@ -183,39 +183,8 @@ def get_all_tables_data():
     # Return the dictionary as the response
     return output, 200
 
-
-
-
-@app.route("/all_tables/<string:title>", methods=["GET"])
-def get_specific_movie_from_all_tables(title):
-    # Find the movie by title
-    movie = Movies.query.filter_by(title=title).first()
-
-    if movie is None:
-        return {"message": "Movie not found. Please note that the movie search is cap sensitive"}, 404
-
-    # Fetch related data using the relationships between tables
-    director = movie.director
-    box_office = movie.box_office_id
-    lead_actor = movie.lead_actor_id
-
-    # Serialize data using the corresponding schemas
-    movie_output = movie_schema.dump(movie)
-    director_output = director_schema.dump(director)
-    box_office_output = box_office_schema.dump(box_office)
-    lead_actor_output = lead_actor_schema.dump(lead_actor)
-
-    output = {
-        "movie": movie_output,
-        "director": director_output,
-        "box_office": box_office_output,
-        "lead_actor": lead_actor_output
-    }
-
-    return output, 200
-
-@app.route("/all_tables/<int:id>", methods=["GET"])
-def get_specific_movie_from(id):
+@app.route("/all/<int:id>", methods=["GET"])
+def get_specific_movie_id_all_tables(id):
     # Find the movie by id
     movie = Movies.query.get(id)
 
@@ -242,9 +211,40 @@ def get_specific_movie_from(id):
 
     return output, 200
 
-@app.route("/all_tables/director/<string:name>", methods=["GET"])
-def get_specific_director_from(name):
-    # Find the movie by id
+
+@app.route("/all/<string:title>", methods=["GET"])
+def get_specific_movie_title_all_tables(title):
+    # Find the movie by title
+    movie = Movies.query.filter_by(title=title).first()
+
+    if movie is None:
+        return {"message": "Movie not found. Please note that the movie search is cap sensitive"}, 404
+
+    # Fetch related data using the relationships between tables
+    director = movie.director
+    box_office = movie.box_office_id
+    lead_actor = movie.lead_actor_id
+
+    # Serialize data using the corresponding schemas
+    movie_output = movie_schema.dump(movie)
+    director_output = director_schema.dump(director)
+    box_office_output = box_office_schema.dump(box_office)
+    lead_actor_output = lead_actor_schema.dump(lead_actor)
+
+    output = {
+        "movie": movie_output,
+        "director": director_output,
+        "box_office": box_office_output,
+        "lead_actor": lead_actor_output
+    }
+
+    return output, 200
+
+
+
+@app.route("/all/<string:name>", methods=["GET"])
+def get_specific_director_all_tables(name):
+    # Find the director by directors name
     director = Directors.query.filter_by(name=name).first()
 
     if director is None:
@@ -273,7 +273,7 @@ def get_specific_director_from(name):
 
 
 # Displays all movies from movies table
-@app.route("/movies", methods=["GET"])
+@app.route("/tables/movies", methods=["GET"])
 def get_all_movies():
     movies_list = Movies.query.all() 
     output = movies_schema.dump(movies_list)
@@ -281,7 +281,7 @@ def get_all_movies():
 
 
 # Displays a movie from movie_id
-@app.route("/movies/<int:id>", methods=["GET"])
+@app.route("/tables/movies/<int:id>", methods=["GET"])
 def get_specific_movie(id):
     movie = Movies.query.get(id) 
     if movie is None:
@@ -289,14 +289,14 @@ def get_specific_movie(id):
     return movie_schema.dump(movie), 200
 
 # Displays all directors
-@app.route("/directors", methods=["GET"])
+@app.route("/tables/directors", methods=["GET"])
 def get_all_directors():
     directors_list = Directors.query.all() 
     output = directors_schema.dump(directors_list)
     return (output), 200
 
 # Displays a director from director_id
-@app.route("/directors/<int:id>", methods=["GET"])
+@app.route("/tables/directors/<int:id>", methods=["GET"])
 def get_specific_director(id):
     director = Directors.query.get(id) 
     if director is None:
@@ -305,14 +305,14 @@ def get_specific_director(id):
 
 
 # Displays all box_office entires
-@app.route("/box_office", methods=["GET"])
+@app.route("/tables/box_office", methods=["GET"])
 def get_all_box_offices():
     box_offices_list = BoxOffice.query.all() 
     output = box_offices_schema.dump(box_offices_list)
     return (output), 200
 
 # Displays a box_office entry from box_office_id
-@app.route("/box_office/<int:id>", methods=["GET"])
+@app.route("/tables/box_office/<int:id>", methods=["GET"])
 def get_specific_box_office(id):
     box_office = BoxOffice.query.get(id) 
     if box_office is None:
@@ -321,7 +321,7 @@ def get_specific_box_office(id):
 
 
 # Displays all lead actors
-@app.route("/lead_actors", methods=["GET"])
+@app.route("/tables/lead_actors", methods=["GET"])
 def get_all_lead_actors():
     lead_actors_list = LeadActor.query.all() 
     # con holds converted to format that works from schema
@@ -329,7 +329,7 @@ def get_all_lead_actors():
     return (output)
 
 # Displays a lead actor entry from lead_actors_id
-@app.route("/lead_actors/<int:id>", methods=["GET"])
+@app.route("/tables/lead_actors/<int:id>", methods=["GET"])
 def get_specific_lead_actor(id):
     lead_actor = LeadActor.query.get(id) 
     if lead_actor is None:
@@ -354,28 +354,50 @@ def post_movie():
     box_office_fields = box_office_schema.load(box_office_data)
     lead_actor_fields = lead_actor_schema.load(lead_actor_data)
 
+    director_id = movie_fields["director_id"]
+    movie_id_box = box_office_fields["movie_id"]
+    movie_id_actor = lead_actor_fields["movie_id"]
+
+    # Check if the provided movie_id already exists in the MOVIES table
+    existing_movie = Movies.query.filter_by(movie_id=movie_id_box).first()
+    if existing_movie:
+        # If the movie_id already exists, return an error message
+        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
+    
+    # Check if the provided movie_id already exists in the MOVIES table
+    existing_movie = Movies.query.filter_by(movie_id=movie_id_actor).first()
+    if existing_movie:
+        # If the movie_id already exists, return an error message
+        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
+
+    # Check if the provided director_id already exists in the DIRECTORS table
+    existing_director = Directors.query.filter_by(director_id=director_id).first()
+    if existing_director:
+        # If the director_id already exists, return an error message
+        return jsonify({"ERROR": "The provided director_id is already in use. Please provide a unique director_id."})
+
     director = Directors(
-        name = director_fields["name"],
-        dob = director_fields["dob"])
-    
+        name=director_fields["name"],
+        dob=director_fields["dob"])
+
     movie = Movies(
-        title = movie_fields["title"],
-        genre = movie_fields["genre"],
-        year_released = movie_fields["year_released"],
-        runtime = movie_fields["runtime"],
-        rotten_tomatoes_rating = movie_fields["rotten_tomatoes_rating"],
-        director_id = movie_fields["director_id"])
-    
+        title=movie_fields["title"],
+        genre=movie_fields["genre"],
+        year_released=movie_fields["year_released"],
+        runtime=movie_fields["runtime"],
+        rotten_tomatoes_rating=movie_fields["rotten_tomatoes_rating"],
+        director_id=movie_fields["director_id"])
+
     box_office = BoxOffice(
-        worldwide_gross = box_office_fields["worldwide_gross"],
-        domestic_gross = box_office_fields["domestic_gross"],
-        movie_id = box_office_fields["movie_id"])
-    
+        worldwide_gross=box_office_fields["worldwide_gross"],
+        domestic_gross=box_office_fields["domestic_gross"],
+        movie_id=box_office_fields["movie_id"])
+
     lead_actor = LeadActor(
-        lead_actor_name = lead_actor_fields["lead_actor_name"],
-        lead_character_name = lead_actor_fields["lead_character_name"],
-        movie_id = lead_actor_fields["movie_id"])
-    
+        lead_actor_name=lead_actor_fields["lead_actor_name"],
+        lead_character_name=lead_actor_fields["lead_character_name"],
+        movie_id=lead_actor_fields["movie_id"])
+
     db.session.add_all([director, movie, box_office, lead_actor])
     db.session.commit()
     print(movie.title + " has been added")
@@ -388,4 +410,18 @@ def post_movie():
 
 
 
+# ---------------DELETE---------------
 
+@app.route('/delete_movie/<int:movie_id>', methods=['DELETE'])
+def delete_movie(movie_id):
+    movie = Movies.query.get(movie_id)
+    if not movie:
+        return jsonify({'message': 'Movie not found'}), 404
+
+    try:
+        db.session.delete(movie)
+        db.session.commit()
+        return jsonify({'message': 'Movie deleted successfully'})
+    except:
+        db.session.rollback()
+        return jsonify({'message': 'Error deleting movie'}), 500
