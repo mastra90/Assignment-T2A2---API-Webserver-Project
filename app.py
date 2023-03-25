@@ -19,11 +19,7 @@ ma = Marshmallow(app)
 
 # ***********************SCHEMAS************************
 
-# -----------All tables-----------
-
-
-
-# -----------Movie-----------
+# --------Movie Schema--------
 def seconds_to_hhmmss(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -134,9 +130,7 @@ def seed_lead_actor():
     seed_lead_actor_table(LeadActor, db)
 
 
-# ***********************Routes***********************
-
-# ---------------GET---------------
+# ******************** GET ********************
 
 @app.route("/")
 def index():
@@ -166,7 +160,7 @@ def get_all_data():
     box_offices_list = BoxOffice.query.all()
     lead_actors_list = LeadActor.query.all()
 
-    # Serialize data using the corresponding schemas
+    # Serialize data using schemas
     movies_output = movies_schema.dump(movies_list)
     directors_output = directors_schema.dump(directors_list)
     box_offices_output = box_offices_schema.dump(box_offices_list)
@@ -196,7 +190,7 @@ def get_specific_movie_id_all_tables(id):
     box_office = movie.box_office_id
     lead_actor = movie.lead_actor_id
 
-    # Serialize data using the corresponding schemas
+    # Serialize data using the schemas
     movie_output = movie_schema.dump(movie)
     director_output = director_schema.dump(director)
     box_office_output = box_office_schema.dump(box_office)
@@ -270,8 +264,6 @@ def get_specific_director_all_tables(name):
 
     return output, 200
 
-
-
 # Displays all movies from movies table
 @app.route("/tables/movies", methods=["GET"])
 def get_all_movies():
@@ -334,12 +326,9 @@ def get_specific_lead_actor(id):
     lead_actor = LeadActor.query.get(id) 
     if lead_actor is None:
         return {"message": "Lead actor not found"}, 404
-    return lead_actor_schema.dump(lead_actor) ,200 
+    return lead_actor_schema.dump(lead_actor) ,200
 
-
-
-# ---------------POST---------------
-
+# ******************** POST ********************
 
 @app.route("/post_movie", methods=["POST"])
 def post_movie():
@@ -357,23 +346,26 @@ def post_movie():
     director_id = movie_fields["director_id"]
     movie_id_box = box_office_fields["movie_id"]
     movie_id_actor = lead_actor_fields["movie_id"]
+    movie_title = movie_fields["title"]
+
+    # Check if the provided movie title already exists in the MOVIES table
+    existing_movie_title = Movies.query.filter_by(title=movie_title).first()
+    if existing_movie_title:
+        return jsonify({"ERROR": "The provided movie title is already in the database. Please provide a unique movie title."})
 
     # Check if the provided movie_id already exists in the MOVIES table
     existing_movie = Movies.query.filter_by(movie_id=movie_id_box).first()
     if existing_movie:
-        # If the movie_id already exists, return an error message
         return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
     
     # Check if the provided movie_id already exists in the MOVIES table
     existing_movie = Movies.query.filter_by(movie_id=movie_id_actor).first()
     if existing_movie:
-        # If the movie_id already exists, return an error message
         return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
 
     # Check if the provided director_id already exists in the DIRECTORS table
     existing_director = Directors.query.filter_by(director_id=director_id).first()
     if existing_director:
-        # If the director_id already exists, return an error message
         return jsonify({"ERROR": "The provided director_id is already in use. Please provide a unique director_id."})
 
     director = Directors(
@@ -408,16 +400,13 @@ def post_movie():
         'lead_actor': lead_actor_schema.dump(lead_actor)
     })
 
-
-
-# ---------------DELETE---------------
+# ******************* DELETE *******************
 
 @app.route('/delete_movie/<int:movie_id>', methods=['DELETE'])
 def delete_movie(movie_id):
     movie = Movies.query.get(movie_id)
     if not movie:
         return jsonify({'message': 'Movie not found'}), 404
-
     try:
         db.session.delete(movie)
         db.session.commit()
