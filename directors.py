@@ -4,7 +4,7 @@ def seed_directors_table(Directors, db):
     db.session.commit()
     print("Directors seeded successfully")
 
-# List of directors
+# Dict of directors entries
 directors_dict = [
     {
         # Avatar

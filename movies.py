@@ -4,7 +4,7 @@ def seed_movies_table(Movies, db):
     db.session.commit()
     print("Movies seeded successfully")
 
-# List of movies
+# List of movie entries
 movies_dict = [
     {
         "title": "Avatar",

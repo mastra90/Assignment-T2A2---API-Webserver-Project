@@ -3,7 +3,7 @@ from sqlalchemy import event
 
 db = SQLAlchemy()
 
-
+# Movies model
 class Movies(db.Model):
     # tablename
     __tablename__ = "movies"
@@ -19,7 +19,7 @@ class Movies(db.Model):
     box_office_id = db.relationship("BoxOffice", backref="movies", uselist=False, cascade="all, delete")
     lead_actor_id = db.relationship("LeadActor", backref="movies", uselist=False, cascade="all, delete")
     
-
+# Directors model
 class Directors(db.Model):
     # tablename
     __tablename__ = "directors"
@@ -30,6 +30,7 @@ class Directors(db.Model):
     dob = db.Column(db.String(10))
     movies = db.relationship("Movies", backref="director", cascade="all, delete") 
 
+# BoxOffice model
 class BoxOffice(db.Model):
     # tablename
     __tablename__ = "box_office"
@@ -40,14 +41,20 @@ class BoxOffice(db.Model):
     domestic_gross = db.Column(db.Float)
     movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"))
 
+# LeadActor model
 class LeadActor(db.Model):
+    # tablename
     __tablename__ = "lead_actor"
+    # Primary key
     lead_actor_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # additional attributes
     lead_actor_name = db.Column(db.String(128), nullable=False)
     lead_character_name = db.Column(db.String(128), nullable=False)
     movie_id = db.Column(db.Integer, db.ForeignKey("movies.movie_id"))
+    
 
-def after_flush(session, flush_context):
+# Allows deletion from all tables when specific movie is deleted to prevent data integrity issues.
+def after_flush(session, required):
     # Iterate through the deleted objects in the session
     for obj in session.deleted:
         # Check if the deleted object is an instance of the Movies class

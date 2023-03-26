@@ -4,7 +4,7 @@ def seed_box_office_table(BoxOffice, db):
     db.session.commit()
     print("BoxOffice seeded successfully")
 
-# List of directors
+# Dict of box office entries
 box_office_dict = [
     {
         # Avatar

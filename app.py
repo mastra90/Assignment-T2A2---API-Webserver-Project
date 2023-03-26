@@ -8,28 +8,31 @@ from lead_actor import seed_lead_actor_table
 from marshmallow import post_dump
 
 
-# Configuration
+# App configuration
 app = Flask(__name__)
 connection = "postgresql+psycopg2://box_office_db_dev:963.@localhost:5432/box_office_db"
 
-#Connection
+#Connection to db
 app.config["SQLALCHEMY_DATABASE_URI"] = connection
 db.init_app(app)
 ma = Marshmallow(app)
 
 # ***********************SCHEMAS************************
 
-# --------Movie Schema--------
+
+
+# Convert the runtime field to HH:MM:SS in Flask (otherwise the server displays the runtime in raw seconds)
 def seconds_to_hhmmss(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
 
-
+# --------Movie Schema--------
 class MoviesSchema(ma.Schema):
     class Meta:
         fields = ("movie_id", "title", "genre", "year_released", "runtime", "rotten_tomatoes_rating", "director_id")
     
+    # Flush to execute the seconds_to_hhmmss function 
     @post_dump(pass_many=True)
     def format_runtime(self, data, many):
         if many:
@@ -41,7 +44,7 @@ class MoviesSchema(ma.Schema):
 
 # Schema to handle many or all movies
 movies_schema = MoviesSchema(many=True)
-# Schema to handle single movie
+# Schema to handle a single movie
 movie_schema = MoviesSchema()
 
 
@@ -51,7 +54,7 @@ class DirectorsSchema(ma.Schema):
         fields = ("director_id", "name", "dob")
 # Schema to handle many or all directors
 directors_schema = DirectorsSchema(many=True)
-# Schema to handle single director
+# Schema to handle a single director
 director_schema = DirectorsSchema()
 
 
@@ -59,9 +62,9 @@ director_schema = DirectorsSchema()
 class BoxOfficeSchema(ma.Schema):
     class Meta:
         fields = ("box_office_id", "worldwide_gross", "domestic_gross", "movie_id")
-# Schema to handle many or all box_offices
+# Schema to handle many or all box office entires
 box_offices_schema = BoxOfficeSchema(many=True)
-# Schema to handle single box_office
+# Schema to handle a single box office entry
 box_office_schema = BoxOfficeSchema()
 
 
@@ -71,23 +74,26 @@ class LeadActorSchema(ma.Schema):
         fields = ("lead_actor_id", "lead_actor_name", "lead_character_name", "movie_id")
 # Schema to handle all lead actors
 lead_actors_schema = LeadActorSchema(many=True)
-# Schema to handle single lead actor
+# Schema to handle a single lead actor
 lead_actor_schema = LeadActorSchema()
 
 
 
 # ***********************CLI commands***********************
 
+# Function to create all tables
 @app.cli.command("create")
 def create_db():
     db.create_all()
     print ("Tables created successfully")
 
+# Function to delete all tables
 @app.cli.command("drop")
 def create_db():
     db.drop_all()
     print ("Tables dropped successfully")
 
+# Function to seed all tables
 @app.cli.command("seed_all")
 def seed_all_tables():
     seed_directors()
@@ -113,6 +119,7 @@ def seed_directors():
     from app import Directors, db
     seed_directors_table(Directors, db)
 
+# Function to seed the box_office table
 @app.cli.command("seed_box_office")
 def seed_box_office_cli():
     seed_box_office()
@@ -121,6 +128,7 @@ def seed_box_office():
     from app import BoxOffice, db
     seed_box_office_table(BoxOffice, db)
 
+# Function to seed the lead_actor table
 @app.cli.command("seed_lead_actor")
 def seed_lead_actor_cli():
     seed_lead_actor()
@@ -132,6 +140,7 @@ def seed_lead_actor():
 
 # ******************** GET ********************
 
+# Homepage
 @app.route("/")
 def index():
     return """
@@ -181,9 +190,8 @@ def get_all_data():
 def get_specific_movie_id_all_tables(id):
     # Find the movie by id
     movie = Movies.query.get(id)
-
     if movie is None:
-        return {"message": "Movie not found. Please note that the movie filter is cap sensitive"}, 404
+        return {"ERROR": "Movie not found. Please note that the movie filter is cap sensitive."}, 404
 
     # Fetch related data using the relationships between tables
     director = movie.director
@@ -196,6 +204,7 @@ def get_specific_movie_id_all_tables(id):
     box_office_output = box_office_schema.dump(box_office)
     lead_actor_output = lead_actor_schema.dump(lead_actor)
 
+    # Store the serialized data in a dictionary
     output = {
         "movie": movie_output,
         "director": director_output,
@@ -210,9 +219,8 @@ def get_specific_movie_id_all_tables(id):
 def get_specific_movie_title_all_tables(title):
     # Find the movie by title
     movie = Movies.query.filter_by(title=title).first()
-
     if movie is None:
-        return {"message": "Movie not found. Please note that the movie search is cap sensitive"}, 404
+        return {"ERROR": "Movie not found. Please note that the movie search is cap sensitive."}, 404
 
     # Fetch related data using the relationships between tables
     director = movie.director
@@ -225,6 +233,7 @@ def get_specific_movie_title_all_tables(title):
     box_office_output = box_office_schema.dump(box_office)
     lead_actor_output = lead_actor_schema.dump(lead_actor)
 
+    # Store the serialized data in a dictionary
     output = {
         "movie": movie_output,
         "director": director_output,
@@ -235,8 +244,7 @@ def get_specific_movie_title_all_tables(title):
     return output, 200
 
 
-
-# Displays all movies from movies table
+# Displays entire movies table
 @app.route("/tables/movies", methods=["GET"])
 def get_all_movies():
     movies_list = Movies.query.all() 
@@ -244,102 +252,107 @@ def get_all_movies():
     return (output), 200
 
 
-# Displays a movie from movie_id
+# Displays a single movie from movie_id
 @app.route("/tables/movies/<int:id>", methods=["GET"])
 def get_specific_movie(id):
     movie = Movies.query.get(id) 
     if movie is None:
-        return {"message": "Movie not found"}, 404
+        return {"ERROR": "Movie not found"}, 404
     return movie_schema.dump(movie), 200
 
-# Displays all directors
+# Displays entire directors table
 @app.route("/tables/directors", methods=["GET"])
 def get_all_directors():
     directors_list = Directors.query.all() 
     output = directors_schema.dump(directors_list)
     return (output), 200
 
-# Displays a director from director_id
+# Displays a single director from director_id
 @app.route("/tables/directors/<int:id>", methods=["GET"])
 def get_specific_director(id):
     director = Directors.query.get(id) 
     if director is None:
-        return {"message": "Director not found"}, 404
+        return {"ERROR": "Director not found."}, 404
     return director_schema.dump(director), 200
 
 
-# Displays all box_office entires
+# Displays entire box_office table
 @app.route("/tables/box_office", methods=["GET"])
 def get_all_box_offices():
     box_offices_list = BoxOffice.query.all() 
     output = box_offices_schema.dump(box_offices_list)
     return (output), 200
 
-# Displays a box_office entry from box_office_id
+# Displays a single box_office entry from box_office_id
 @app.route("/tables/box_office/<int:id>", methods=["GET"])
 def get_specific_box_office(id):
     box_office = BoxOffice.query.get(id) 
     if box_office is None:
-        return {"message": "Box office entry not found"}, 404
+        return {"ERROR": "Box office value not found."}, 404
     return box_office_schema.dump(box_office) ,200
 
 
-# Displays all lead actors
+# Displays entire lead actors table
 @app.route("/tables/lead_actors", methods=["GET"])
 def get_all_lead_actors():
     lead_actors_list = LeadActor.query.all() 
-    # con holds converted to format that works from schema
     output = lead_actors_schema.dump(lead_actors_list)
-    return (output)
+    return (output), 200
 
-# Displays a lead actor entry from lead_actors_id
+# Displays a single lead actor from lead_actor_id
 @app.route("/tables/lead_actors/<int:id>", methods=["GET"])
 def get_specific_lead_actor(id):
     lead_actor = LeadActor.query.get(id) 
     if lead_actor is None:
-        return {"message": "Lead actor not found"}, 404
+        return {"ERROR": "Lead actor not found."}, 404
     return lead_actor_schema.dump(lead_actor) ,200
 
 # ******************** POST ********************
 
 @app.route("/post_movie", methods=["POST"])
 def post_movie():
+    # Extract the JSON data from the request
     json_data = request.get_json()
+
+    # Separate the JSON data into the different sections (director, movie, box office, lead actor)
     director_data = json_data[0]
     movie_data = json_data[1]
     box_office_data = json_data[2]
     lead_actor_data = json_data[3]
 
+    # Validates the data using schemas
     director_fields = director_schema.load(director_data)
     movie_fields = movie_schema.load(movie_data)
     box_office_fields = box_office_schema.load(box_office_data)
     lead_actor_fields = lead_actor_schema.load(lead_actor_data)
 
+    # Extract the necessary ids and movie title for validation checks
     director_id = movie_fields["director_id"]
     movie_id_box = box_office_fields["movie_id"]
     movie_id_actor = lead_actor_fields["movie_id"]
     movie_title = movie_fields["title"]
 
-    # Check if the provided movie title already exists in the MOVIES table
+    # Check if the provided movie title already exists in the movies table
     existing_movie_title = Movies.query.filter_by(title=movie_title).first()
     if existing_movie_title:
-        return jsonify({"ERROR": "The provided movie title is already in the database. Please provide a unique movie title."})
+        return jsonify({"ERROR": "The provided movie title is already in the database. Please provide a unique movie title."}), 405
 
-    # Check if the provided movie_id already exists in the MOVIES table
+    # Check if the provided movie_id already exists in the box_office table
     existing_movie = Movies.query.filter_by(movie_id=movie_id_box).first()
     if existing_movie:
-        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
+        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."}), 405
     
-    # Check if the provided movie_id already exists in the MOVIES table
+    # Check if the provided movie_id already exists in the lead_actor table
     existing_movie = Movies.query.filter_by(movie_id=movie_id_actor).first()
     if existing_movie:
-        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."})
+        return jsonify({"ERROR": "The provided movie_id is already in use. Please provide a unique movie_id."}), 405
 
-    # Check if the provided director_id already exists in the DIRECTORS table
+    # Check if the provided director_id already exists in the directors table
     existing_director = Directors.query.filter_by(director_id=director_id).first()
     if existing_director:
-        return jsonify({"ERROR": "The provided director_id is already in use. Please provide a unique director_id."})
+        return jsonify({"ERROR": "The provided director_id is already in use. Please provide a unique director_id."}), 405
 
+    # Create new instances of the Director, Movie, BoxOffice, and LeadActor models
     director = Directors(
         name=director_fields["name"],
         dob=director_fields["dob"])
@@ -362,27 +375,59 @@ def post_movie():
         lead_character_name=lead_actor_fields["lead_character_name"],
         movie_id=lead_actor_fields["movie_id"])
 
+    # Add the new instances to the database session and commit the changes
     db.session.add_all([director, movie, box_office, lead_actor])
     db.session.commit()
     print(movie.title + " has been added")
+
     return jsonify({
-        'director': director_schema.dump(director),
-        'movie': movie_schema.dump(movie),
-        'box_office': box_office_schema.dump(box_office),
-        'lead_actor': lead_actor_schema.dump(lead_actor)
-    })
+        "director": director_schema.dump(director),
+        "movie": movie_schema.dump(movie),
+        "box_office": box_office_schema.dump(box_office),
+        "lead_actor": lead_actor_schema.dump(lead_actor)
+    }), 200
 
 # ******************* DELETE *******************
 
-@app.route('/delete_movie/<int:movie_id>', methods=['DELETE'])
+@app.route("/delete_movie/<int:movie_id>", methods=["DELETE"])
 def delete_movie(movie_id):
+    # Store the query in the "movie" variable
     movie = Movies.query.get(movie_id)
     if not movie:
-        return jsonify({'message': 'Movie not found'}), 404
-    try:
+        return jsonify({"ERROR": "Movie not found."}), 404
+    else:
         db.session.delete(movie)
         db.session.commit()
-        return jsonify({'message': 'Movie deleted successfully'})
-    except:
-        db.session.rollback()
-        return jsonify({'message': 'Error deleting movie'}), 500
+        return jsonify({"Success": "Movie deleted successfully."}), 200
+
+    
+# ******************* UPDATE *******************
+    
+
+@app.route("/movies/update_rt/<int:movie_id>", methods=["PUT"])
+def update_movie(movie_id):
+    movie = Movies.query.get(movie_id)
+
+    if not movie:
+        return jsonify({"ERROR": "Movie not found"}), 404
+    movie_fields = movie_schema.load(request.json)
+    # Only the rotten_tomatoes_rating column is allowed to be updated
+    movie.rotten_tomatoes_rating = movie_fields.get("rotten_tomatoes_rating", movie.rotten_tomatoes_rating)
+    db.session.commit()
+    return jsonify(Success="Rotten Tomatoes rating updated.", movie=movie_schema.dump(movie)), 200
+
+
+@app.route("/box_office/update_bo/<int:box_office_id>", methods=["PUT"])
+def update_box_office(box_office_id):
+    box_office = BoxOffice.query.get(box_office_id)
+
+    if not box_office:
+        return jsonify({"ERROR": "Box office entry not found."}), 404
+    
+    box_office_fields = box_office_schema.load(request.json)
+    # Each line is what fields are possible to update
+    box_office.worldwide_gross = box_office_fields.get("worldwide_gross", box_office.worldwide_gross)
+    box_office.domestic_gross = box_office_fields.get("domestic_gross", box_office.domestic_gross)
+
+    db.session.commit()
+    return jsonify(Success="Box office entry updated.", box_office=box_office_schema.dump(box_office)), 200

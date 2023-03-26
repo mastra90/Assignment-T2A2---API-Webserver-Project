@@ -4,7 +4,7 @@ def seed_lead_actor_table(LeadActor, db):
     db.session.commit()
     print("BoxOffice seeded successfully")
 
-# List of directors
+# Dict of lead actors entries
 lead_character_dict = [
     {
         # Avatar
