@@ -236,34 +236,6 @@ def get_specific_movie_title_all_tables(title):
 
 
 
-@app.route("/all/<string:name>", methods=["GET"])
-def get_specific_director_all_tables(name):
-    # Find the director by directors name
-    director = Directors.query.filter_by(name=name).first()
-
-    if director is None:
-        return {"message": "Director not found. Please note that the director filter is cap sensitive"}, 404
-
-    # Fetch related data using the relationships between tables
-    movie = director.movies[0] if director.movies else None
-    box_office = movie.box_office_id if movie else None
-    lead_actor = movie.lead_actor_id if movie else None
-
-    # Serialize data using the corresponding schemas
-    director_output = director_schema.dump(director)
-    movie_output = movie_schema.dump(movie) if movie else None
-    box_office_output = box_office_schema.dump(box_office) if box_office else None
-    lead_actor_output = lead_actor_schema.dump(lead_actor) if lead_actor else None
-
-    output = {
-        "director": director_output,
-        "movie": movie_output,
-        "box_office": box_office_output,
-        "lead_actor": lead_actor_output
-    }
-
-    return output, 200
-
 # Displays all movies from movies table
 @app.route("/tables/movies", methods=["GET"])
 def get_all_movies():
