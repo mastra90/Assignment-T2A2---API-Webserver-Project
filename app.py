@@ -191,7 +191,7 @@ def get_specific_movie_id_all_tables(id):
     # Find the movie by id
     movie = Movies.query.get(id)
     if movie is None:
-        return {"ERROR": "Movie not found. Please note that the movie filter is cap sensitive."}, 404
+        return {"ERROR": "Movie not found."}, 404
 
     # Fetch related data using the relationships between tables
     director = movie.director
