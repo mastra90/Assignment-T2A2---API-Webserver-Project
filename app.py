@@ -186,10 +186,10 @@ def get_all_data():
     # Return the dictionary as the response
     return output, 200
 
-@app.route("/all/<int:id>", methods=["GET"])
-def get_specific_movie_id_all_tables(id):
+@app.route("/all/<int:movie_id>", methods=["GET"])
+def get_specific_movie_id_all_tables(movie_id):
     # Find the movie by id
-    movie = Movies.query.get(id)
+    movie = Movies.query.get(movie_id)
     if movie is None:
         return {"ERROR": "Movie not found."}, 404
 
@@ -215,10 +215,10 @@ def get_specific_movie_id_all_tables(id):
     return output, 200
 
 
-@app.route("/all/<string:title>", methods=["GET"])
-def get_specific_movie_title_all_tables(title):
+@app.route("/all/<string:movie_title>", methods=["GET"])
+def get_specific_movie_title_all_tables(movie_title):
     # Find the movie by title
-    movie = Movies.query.filter_by(title=title).first()
+    movie = Movies.query.filter_by(title=movie_title).first()
     if movie is None:
         return {"ERROR": "Movie not found. Please note that the movie search is cap sensitive."}, 404
 
@@ -253,9 +253,9 @@ def get_all_movies():
 
 
 # Displays a single movie from movie_id
-@app.route("/tables/movies/<int:id>", methods=["GET"])
-def get_specific_movie(id):
-    movie = Movies.query.get(id) 
+@app.route("/tables/movies/<int:movie_title>", methods=["GET"])
+def get_specific_movie(movie_title):
+    movie = Movies.query.get(movie_title) 
     if movie is None:
         return {"ERROR": "Movie not found"}, 404
     return movie_schema.dump(movie), 200
@@ -268,9 +268,9 @@ def get_all_directors():
     return (output), 200
 
 # Displays a single director from director_id
-@app.route("/tables/directors/<int:id>", methods=["GET"])
-def get_specific_director(id):
-    director = Directors.query.get(id) 
+@app.route("/tables/directors/<int:director_id>", methods=["GET"])
+def get_specific_director(director_id):
+    director = Directors.query.get(director_id) 
     if director is None:
         return {"ERROR": "Director not found."}, 404
     return director_schema.dump(director), 200
@@ -284,9 +284,9 @@ def get_all_box_offices():
     return (output), 200
 
 # Displays a single box_office entry from box_office_id
-@app.route("/tables/box_office/<int:id>", methods=["GET"])
-def get_specific_box_office(id):
-    box_office = BoxOffice.query.get(id) 
+@app.route("/tables/box_office/<int:box_office_id>", methods=["GET"])
+def get_specific_box_office(box_office_id):
+    box_office = BoxOffice.query.get(box_office_id) 
     if box_office is None:
         return {"ERROR": "Box office value not found."}, 404
     return box_office_schema.dump(box_office) ,200
@@ -300,9 +300,9 @@ def get_all_lead_actors():
     return (output), 200
 
 # Displays a single lead actor from lead_actor_id
-@app.route("/tables/lead_actors/<int:id>", methods=["GET"])
-def get_specific_lead_actor(id):
-    lead_actor = LeadActor.query.get(id) 
+@app.route("/tables/lead_actors/<int:lead_actor_id>", methods=["GET"])
+def get_specific_lead_actor(lead_actor_id):
+    lead_actor = LeadActor.query.get(lead_actor_id) 
     if lead_actor is None:
         return {"ERROR": "Lead actor not found."}, 404
     return lead_actor_schema.dump(lead_actor) ,200
