@@ -378,14 +378,12 @@ def post_movie():
     # Add the new instances to the database session and commit the changes
     db.session.add_all([director, movie, box_office, lead_actor])
     db.session.commit()
-    print(movie.title + " has been added")
+    return jsonify(Success=movie.title + " has been added", 
+                movie=movie_schema.dump(movie),
+                director=director_schema.dump(director),
+                box_office=box_office_schema.dump(box_office),
+                lead_actor=lead_actor_schema.dump(lead_actor)), 200
 
-    return jsonify({
-        "director": director_schema.dump(director),
-        "movie": movie_schema.dump(movie),
-        "box_office": box_office_schema.dump(box_office),
-        "lead_actor": lead_actor_schema.dump(lead_actor)
-    }), 200
 
 # ******************* DELETE *******************
 
